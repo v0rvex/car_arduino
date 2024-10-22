@@ -1,89 +1,32 @@
-// Пин, подключенный к ST_CP 74HC595 (управление защелкой)
-int latchPin = 8;
-// Пин, подключенный к SH_CP 74HC595 (синхронизация тактового сигнала)
-int clockPin = 12;
-// Пин, подключенный к DS 74HC595 (данные)
-int dataPin = 11;
+// Пины для светодиодов
+int ledPins[] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
-// Пины для управления разрядами (анодами) 7-сегментного индикатора
-int digit1 = A0;
-int digit2 = A1;
-int digit3 = A2;
-int digit4 = A3;
+// Пин для потенциометра (реостата)
+int potPin = A0;
 
-int count = 0; // Переменная для отсчета
+// Переменная для хранения значения потенциометра
+int potValue = 0;
 
 void setup() {
-  // Установка пинов для управления сдвиговым регистром как выходы
-  pinMode(latchPin, OUTPUT);
-  pinMode(clockPin, OUTPUT);
-  pinMode(dataPin, OUTPUT);
-  
-  // Установка пинов для управления 4-разрядным индикатором как выходы
-  pinMode(digit1, OUTPUT);
-  pinMode(digit2, OUTPUT);
-  pinMode(digit3, OUTPUT);
-  pinMode(digit4, OUTPUT);
+  // Настройка всех пинов для светодиодов как выходы
+  for (int i = 0; i < 10; i++) {
+    pinMode(ledPins[i], OUTPUT);
+  }
 }
-
-// Функция обратного вызова для увеличения счетчика
-void callback() {
-  count++;
-}
-
-int c = 0;
 
 void loop() {
-  // Основной цикл, обновляющий показания индикатора 50 раз в секунду
-  for(int i = 0; i < 50; i++){
-    
-    // Отображение 4-го разряда (тысячи)
-    displayDigit(extractDigit(count, 4));
-    digitalWrite(digit1, HIGH);
-    digitalWrite(digit2, LOW);
-    digitalWrite(digit3, LOW);
-    digitalWrite(digit4, LOW);
-    delay(5);
-    
-    // Отображение 3-го разряда (сотни)
-    displayDigit(extractDigit(count, 3));
-    digitalWrite(digit1, LOW);
-    digitalWrite(digit2, HIGH);
-    digitalWrite(digit3, LOW);
-    digitalWrite(digit4, LOW);
-    delay(5);
-    
-    // Отображение 2-го разряда (десятки)
-    displayDigit(extractDigit(count, 2));
-    digitalWrite(digit1, LOW);
-    digitalWrite(digit2, LOW);
-    digitalWrite(digit3, HIGH);
-    digitalWrite(digit4, LOW);
-    delay(5);
-    
-    // Отображение 1-го разряда (единицы)
-    displayDigit(extractDigit(count, 1));
-    digitalWrite(digit1, LOW);
-    digitalWrite(digit2, LOW);
-    digitalWrite(digit3, LOW);
-    digitalWrite(digit4, HIGH);
-    delay(5);
-  }
-  count++; // Увеличение значения счетчика
-}
-
-// Функция для отображения цифры на 7-сегментном индикаторе
-void displayDigit(int d) {
-  // Определение битовых шаблонов для цифр от 0 до 9
-  char number[10] = {0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F};
+  // Чтение значения с потенциометра
+  potValue = analogRead(potPin);
   
-  digitalWrite(latchPin, LOW);  // Опускание защелки для отправки данных
-  // Отправка битов в сдвиговый регистр
-  shiftOut(dataPin, clockPin, MSBFIRST, ~number[d]);  
-  digitalWrite(latchPin, HIGH); // Поднятие защелки для фиксации данных
-}
-
-// Функция для извлечения конкретной цифры из числа
-int extractDigit(int V, int P) {
-  return int(V / (pow(10, P-1))) % 10;  // Извлечение P-й цифры числа
+  // Преобразование значения потенциометра в число от 0 до 10
+  int numLedsOn = map(potValue, 0, 1023, 0, 10);
+  
+  // Включение нужного количества светодиодов
+  for (int i = 0; i < 10; i++) {
+    if (i < numLedsOn) {
+      digitalWrite(ledPins[i], HIGH);  // Вкл светодиод
+    } else {
+      digitalWrite(ledPins[i], LOW);   // Выкл светодиод
+    }
+  }
 }
